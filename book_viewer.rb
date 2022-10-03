@@ -5,8 +5,8 @@ require "sinatra/reloader"
 helpers do
   def in_paragraphs(text)
     paragraphs = text.split("\n\n")
-    paragraphs.map do |paragraph|
-      "<p>#{paragraph}</p>"
+    paragraphs.each_with_index.map do |line, index|
+      "<p id=paragraph#{index}>#{line}</p>"
     end.join
   end
 
@@ -21,13 +21,21 @@ helpers do
   def chapters_matching(query)
     results = []
 
-    return results if !query || query.empty?
+    return results unless query
 
     each_chapter do |number, name, contents|
-      results << {number: number, name: name} if contents.include?(query)
+      matches = {}
+      contents.split("\n\n").each_with_index do |paragraph, index|
+        matches[index] = paragraph if paragraph.include?(query)
+      end
+      results << {number: number, name: name, paragraphs: matches} if matches.any?
     end
 
     results
+  end
+
+  def highlight(text, query)
+    text.gsub(query, %(<strong>#{query}</strong>))
   end
 end
 
